@@ -1,0 +1,7 @@
+﻿{
+  "DataSource": "",
+  "UserId": "",
+  "Password": "",
+  "PathToBak": "/etc/dotnet_dbbackups/",
+  "PathToLog": "/var/log/dotnet_dbbackups/"
+}
