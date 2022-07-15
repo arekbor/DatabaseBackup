@@ -7,7 +7,7 @@ public static class ReadJson
 {
     public static async Task InitJson()
     {
-        using var reader = new StreamReader(@"C:\Users\a_r_e_000\RiderProjects\DatabaseBackup\DatabaseBackup\dbSettings.json");
+        using var reader = new StreamReader(@"dbSettings.json");
         var json = await reader.ReadToEndAsync();
         var items = JsonConvert.DeserializeObject<DbItems>(json);
     }
