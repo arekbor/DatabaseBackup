@@ -1,4 +1,4 @@
-﻿using System.Data.SqlClient;
+using System.Data.SqlClient;
 using System.Reflection;
 using System.Text;
 using DatabaseBackup.Data;
@@ -24,13 +24,14 @@ public class DbContext
                     $"{MethodBase.GetCurrentMethod()?.DeclaringType} connected successfully");
                 Console.ResetColor();
 
-                const string cmdText = "SELECT name FROM sys.databases;";
+                const string cmdTextSelectDatabases = "SELECT name FROM sys.databases;";
                 
-                using (var sqlCmdDatabases = new SqlCommand(cmdText, conn)){
+                _listOfDatabases = new List<string>();
+                var stringBuilder = new StringBuilder();
+
+                using (var sqlCmdDatabases = new SqlCommand(cmdTextSelectDatabases, conn)){
                     using (var sqlReader = await sqlCmdDatabases.ExecuteReaderAsync()){
 
-                        _listOfDatabases = new List<string>();
-                        var stringBuilder = new StringBuilder();
                         while (await sqlReader.ReadAsync())
                         {
 
@@ -45,29 +46,29 @@ public class DbContext
                             stringBuilder.Append($"BACKUP DATABASE {sqlReader[0]} ");
                             stringBuilder.Append(@$"TO DISK = '{pathToBak}{DateTime.Now.ToString("MMddyyyyHHmm")}/{sqlReader[0]}.BAK';");
                         }
-                        await conn.CloseAsync();
-                        await conn.OpenAsync();
-
-                        var sqlCmdBackup = new SqlCommand(stringBuilder.ToString(), conn);
-                        await sqlCmdBackup.ExecuteReaderAsync();
-                        await conn.CloseAsync();
-
-                        Console.WriteLine($"{Message.Prefix}" +
-                                $"Backup successfully created {DateTime.Now.ToString("MM/dd/yyyy HH:mm")}");
-                        }
-
-                        if(!Directory.Exists($"{pathToLog}"))
-                            Directory.CreateDirectory($"{pathToLog}");
-
-                        string text = $"{Message.Prefix}" +
-                            $"({DateTime.Now.ToString("MM/dd/yyyy HH:mm")}) " +
-                            $"Backup successfully created" + System.Environment.NewLine +
-                            $"created backups:" + System.Environment.NewLine +
-                            $"{String.Join(", ", _listOfDatabases.ToArray())}";
-
-                        await File.WriteAllTextAsync($"{pathToLog}{DateTime.Now.ToString("MMddyyyyHHmm")}.txt",text);
                     }
                 }
+                await conn.CloseAsync();
+                await conn.OpenAsync();
+
+                var sqlCmdBackup = new SqlCommand(stringBuilder.ToString(), conn);
+                await sqlCmdBackup.ExecuteReaderAsync();
+                await conn.CloseAsync();
+
+                Console.WriteLine($"{Message.Prefix}" +
+                        $"Backup successfully created {DateTime.Now.ToString("MM/dd/yyyy HH:mm")}");
+                }
+
+                if(!Directory.Exists($"{pathToLog}"))
+                    Directory.CreateDirectory($"{pathToLog}");
+
+                string text = $"{Message.Prefix}" +
+                    $"({DateTime.Now.ToString("MM/dd/yyyy HH:mm")}) " +
+                    $"Backup successfully created" + System.Environment.NewLine +
+                    $"created backups:" + System.Environment.NewLine +
+                    $"{String.Join(", ", _listOfDatabases.ToArray())}";
+
+                await File.WriteAllTextAsync($"{pathToLog}{DateTime.Now.ToString("MMddyyyyHHmm")}.txt",text);
         }
         catch (Exception e)
         {
